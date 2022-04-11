@@ -24,13 +24,22 @@ public class Board {
 	protected int[] board = new int[N+1];
 
 	/**
-	 * Generiert ein zufälliges Board.
+	 * Generiert ein zufälliges lösbares Board.
 	 */
 	public Board() {
+		List<Integer> l = new LinkedList<>();
 		for (int i = 0; i < N + 1; ++i) {
-			board[i] = i;
+			l.add(i);
 		}
-		Collections.shuffle(Arrays.asList(board));
+		while (true) {
+			Collections.shuffle(l);
+			for (int i = 0; i < N + 1; ++i) {
+				board[i] = l.get(i);
+			}
+			if (parity()) {
+				break;
+			}
+		}
 	}
 	
 	/**
@@ -115,7 +124,7 @@ public class Board {
 			}
 			int x = Math.abs(board[i] - i);
 			h += (x / 3) + (x % 3);
-			if (x == 1 && (i == 2 || i == 3 || i == 5 || i == 6)) {
+			if (x == 1 && ((board[i] > i && (i == 2 || i == 5)) || (board[i] < i && (i == 3 || i == 6)))) {
 				h += 2;
 			}
 		}
@@ -191,6 +200,9 @@ public class Board {
 			System.out.println(child);
 		
 		System.out.println(goal.isSolved());
+		Board b2 = new Board();
+		System.out.println(b2);
+		System.out.println(b2.parity());
 	}
 }
 	
