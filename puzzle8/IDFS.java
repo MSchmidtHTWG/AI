@@ -17,6 +17,7 @@ public class IDFS {
 	}
 
 	private static Deque<Board> dfs(Board curBoard, Deque<Board> path, int limit) {
+		++suchkosten;
 		if (curBoard.isSolved()) {
 			return path;
 		} else if (limit == 0) {
@@ -26,7 +27,6 @@ public class IDFS {
 				if (path.contains(child)) {
 					continue;
 				}
-				++suchkosten;
 				path.add(child);
 				Deque<Board> result = dfs(child,path,limit - 1);
 				if (result != null)
@@ -47,7 +47,7 @@ public class IDFS {
 	}
 	
 	public static Deque<Board> idfs(Board curBoard) {
-		suchkosten = 1;
+		suchkosten = 0;
 		Deque<Board> path = new LinkedList<>();
 		path.addLast(curBoard);
 		Deque<Board> res =  idfs(curBoard, path); 

@@ -28,7 +28,6 @@ public class A_Star {
 	}
 
 	public static Deque<Board> aStar(Board startBoard) {
-		suchkosten = 1;
 		if (startBoard.isSolved())
 			return new LinkedList<>();
 		cost.clear();
