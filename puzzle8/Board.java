@@ -128,7 +128,38 @@ public class Board {
 	 */
 	public List<Board> possibleActions() {
 		List<Board> boardList = new LinkedList<>();
-		// ...
+		int x = 0;
+		for (int i = 0; i < board.length; ++i) {
+			if (board[i] == 0) {
+				x = i;
+				break;
+			}
+		}
+		int[] newBoard;
+		if (x - 3 >= 0) {
+			newBoard = Arrays.copyOf(board, N + 1);
+			newBoard[x] = newBoard[x-3];
+			newBoard[x-3] = 0;
+			boardList.add(new Board(newBoard));
+		}
+		if (x - 1 >= 0 && x != 3 && x != 6) {
+			newBoard = Arrays.copyOf(board, N + 1);
+			newBoard[x] = newBoard[x-1];
+			newBoard[x-1] = 0;
+			boardList.add(new Board(newBoard));
+		}
+		if (x + 1 <= 8 && x != 2 && x != 5) {
+			newBoard = Arrays.copyOf(board, N + 1);
+			newBoard[x] = newBoard[x+1];
+			newBoard[x+1] = 0;
+			boardList.add(new Board(newBoard));
+		}
+		if (x + 3 <= 8) {
+			newBoard = Arrays.copyOf(board, N + 1);
+			newBoard[x] = newBoard[x+3];
+			newBoard[x+3] = 0;
+			boardList.add(new Board(newBoard));
+		}
 		return boardList;
 	}
 	
@@ -138,6 +169,11 @@ public class Board {
 	 * @return true, falls Board Ziestzustand (d.h. 0,1,2,3,4,5,6,7,8)
 	 */
 	public boolean isSolved() {
+		for (int i = 0; i < board.length; ++i) {
+			if (board[i] != i) {
+				return false;
+			}
+		}
 		return true;
 	}
 	
@@ -151,10 +187,10 @@ public class Board {
 		System.out.println(b.h1());
 		System.out.println(b.h2());
 		
-		/** for (Board child : b.possibleActions())
+		for (Board child : b.possibleActions())
 			System.out.println(child);
 		
-		System.out.println(goal.isSolved()); */
+		System.out.println(goal.isSolved());
 	}
 }
 	
