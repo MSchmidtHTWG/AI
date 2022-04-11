@@ -1,4 +1,4 @@
-# Aufgabenblatt 2
+# Aufgabenblatt 2 - Maximilian Schmidt - 301666
 
 ## Aufgabe 1 : Parität
 
@@ -28,15 +28,15 @@ Die Suchkosten werden jeweils beim Aufruf des Suchalgorithmus mit 0 initialisier
 Bei IDFS werden die Suchkosten immer dann erhöht, wenn die rekursive Funktion aufgerufen wird.
 Bei A* werden die Suchkosten immer dann erhöht, wenn ein neuer Kandidat aus der openList betrachtet wird.
 
-Startzustand 1: [2, 7, 6, 5, 1, 3, 8, 0, 4]
-Anz. Züge zur Lösung: 30
-Suchkosten A* mit h2: 9347
-Suchkosten IDFS: 49919866
+Startzustand 1: [2, 7, 6, 5, 1, 3, 8, 0, 4]  
+Anz. Züge zur Lösung: 30  
+Suchkosten A* mit h2: 9347  
+Suchkosten IDFS: 49919866  
 
-Startzustand 2: [0, 4, 3, 8, 7, 2, 1, 6, 5]
-Anz. Züge zur Lösung: 19
-Suchkosten A* mit h2: 96
-Suchkosten IDFS: 97743
+Startzustand 2: [0, 4, 3, 8, 7, 2, 1, 6, 5]  
+Anz. Züge zur Lösung: 19  
+Suchkosten A* mit h2: 96  
+Suchkosten IDFS: 97743  
 
 ### Sind Ihre Zugfolgen optimal? Wenn ja, warum?
 
