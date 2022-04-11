@@ -1,6 +1,7 @@
 package puzzle8;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.LinkedList;
 
@@ -26,6 +27,10 @@ public class Board {
 	 * Generiert ein zufälliges Board.
 	 */
 	public Board() {
+		for (int i = 0; i < N + 1; ++i) {
+			board[i] = i;
+		}
+		Collections.shuffle(Arrays.asList(board));
 	}
 	
 	/**
@@ -33,7 +38,7 @@ public class Board {
 	 * @param board Feld gefüllt mit einer Permutation von 0,1,2, ..., 8.
 	 */
 	public Board(int[] board) {
-		
+		this.board = board;
 	}
 
 	@Override
@@ -71,8 +76,8 @@ public class Board {
 	public boolean parity() {
 		int p = 0;
 		for (int i = 0; i < board.length - 1; ++i) {
-			for (int j = i + 1; j < board.length; ++i) {
-				if (board[i] > board[j]) {
+			for (int j = i + 1; j < board.length; ++j) {
+				if (board[i] != 0 && board[j] !=0 && board[i] > board[j]) {
 					++p;
 				}
 			}
@@ -88,7 +93,13 @@ public class Board {
 	 * @return Heuristikwert.
 	 */
 	public int h1() {
-		return 0; 
+		int h = 0;
+		for (int i = 1; i < board.length; ++i) {
+			if (board[i] != i) {
+				++h;
+			}
+		}
+		return h; 
 	}
 	
 	/**
@@ -96,7 +107,19 @@ public class Board {
 	 * @return Heuristikwert.
 	 */
 	public int h2() {
-		return 0;
+		int h = 0;
+		//int[][] mboard = new int[3][3];
+		for (int i = 0; i < board.length; ++i) {
+			if (board[i] == 0) {
+				continue;
+			}
+			int x = Math.abs(board[i] - i);
+			h += (x / 3) + (x % 3);
+			if (x == 1 && (i == 2 || i == 3 || i == 5 || i == 6)) {
+				h += 2;
+			}
+		}
+		return h;
 	}
 	
 	/**
@@ -128,10 +151,10 @@ public class Board {
 		System.out.println(b.h1());
 		System.out.println(b.h2());
 		
-		for (Board child : b.possibleActions())
+		/** for (Board child : b.possibleActions())
 			System.out.println(child);
 		
-		System.out.println(goal.isSolved());
+		System.out.println(goal.isSolved()); */
 	}
 }
 	
