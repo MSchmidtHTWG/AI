@@ -14,7 +14,7 @@ public class Kalah {
 	 * @param args wird nicht verwendet.
 	 */
 	public static void main(String[] args) {
-		//testExample();
+		//55testExample();
 		testHHGame();
 	}
 	

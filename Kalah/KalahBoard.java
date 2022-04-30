@@ -1,7 +1,9 @@
 package kalah;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.LinkedList;
 import java.util.Scanner;
 
@@ -21,6 +23,8 @@ public class KalahBoard {
 	
 	public static final char APlayer = 'A';	// Spieler A
 	public static final char BPlayer = 'B';  // Spieler B
+
+	public static final char AIPlayer = APlayer;
 	
 	/*
 	 * Board als Feld. 
@@ -53,6 +57,10 @@ public class KalahBoard {
 	private static Scanner in = new Scanner(System.in);
 	private static final String ANSI_BLUE = "\u001B[34m";
 	
+	private static final int SearchDepth = 20;
+	private Map<Integer, Integer> aMove = new HashMap<Integer, Integer>();
+	private Map<Integer, Integer> bMove = new HashMap<Integer, Integer>();
+
 	/**
 	 *	Konstruktor.
 	 *  Legt eine Kalah-Board mit NMulden mit je NSteine an.
@@ -169,6 +177,11 @@ public class KalahBoard {
 				            b[6], b[13],
 				            b[7], b[8], b[9], b[10], b[11], b[12]);
 		System.out.println(s3);
+		if (curPlayer == APlayer) {
+			System.out.println("Suggested move for player A: " + this.AlphaBetaSearch());
+		} else {
+			System.out.println("Suggested move for player B: " + this.AlphaBetaSearch());
+		}
 	}
 
 
@@ -393,6 +406,67 @@ public class KalahBoard {
 			default:
 				return false;
 		}
+	}
+
+	private int heuristic() {
+		int stonesInAPits = 0;
+		int stonesInBPits = 0;
+		for (int i = 0; i < NMulden; i++) {
+			stonesInAPits += board[AStart+i];
+			stonesInBPits += board[BStart+i];
+		}
+		int h = board[AKalah] - board[BKalah] + stonesInAPits - stonesInBPits;
+		return h;
+	}
+
+	private int AlphaBetaSearch() {
+		aMove.clear();
+		if (curPlayer == APlayer) {
+			return MaxValue(this, Integer.MIN_VALUE, Integer.MAX_VALUE, SearchDepth);
+		}
+		return MinValue(this, Integer.MIN_VALUE, Integer.MAX_VALUE, SearchDepth);
+	}
+
+	private int MaxValue(KalahBoard b, int alpha, int beta, int dpth) {
+		if (b.finished || dpth == 0) {
+			return b.heuristic();
+		}
+		int v = Integer.MIN_VALUE;
+		for (var a : this.possibleActions()) {
+			int saveValue = 0;
+			if (dpth == SearchDepth) {
+				saveValue = MinValue(a, alpha, beta, dpth-1);
+				v = Integer.max(v, saveValue);
+			} else {
+				v = Integer.max(v, MinValue(a, alpha, beta, dpth-1));
+			}
+			if (v >= beta) {
+				return v;
+			}
+			alpha = Integer.max(alpha, v);
+			if (dpth == SearchDepth) {
+				aMove.put(saveValue, a.lastPlay);
+			}
+		}
+		if (dpth == SearchDepth) {
+			return aMove.get(v);
+		}
+		return v;
+	}
+
+	private int MinValue(KalahBoard b, int alpha, int beta, int dpth) {
+		if (b.finished || dpth == 0) {
+			return b.heuristic();
+		}
+		int v = Integer.MAX_VALUE;
+		for (var a : this.possibleActions()) {
+			v = Integer.min(v, MaxValue(a, alpha, beta, dpth-1));
+			if (v >= beta) {
+				return v;
+			}
+			beta = Integer.min(beta, v);
+		}
+		return v;
 	}
 }
 	
