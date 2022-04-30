@@ -14,7 +14,7 @@ public class Kalah {
 	 * @param args wird nicht verwendet.
 	 */
 	public static void main(String[] args) {
-		//55testExample();
+		//555testExample();
 		testHHGame();
 	}
 	
@@ -29,7 +29,7 @@ public class Kalah {
 		kalahBd.move(11);
 		kalahBd.print();
 		
-		System.out.println("B darf nochmals ziehen und spielt Mulde 7");
+		System.out.println("B darf nochmals ziehen und spielt Muldequ 7");
 		kalahBd.move(7);
 		kalahBd.print();
 	}

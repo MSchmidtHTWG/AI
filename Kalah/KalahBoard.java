@@ -1,6 +1,7 @@
 package kalah;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,8 +24,6 @@ public class KalahBoard {
 	
 	public static final char APlayer = 'A';	// Spieler A
 	public static final char BPlayer = 'B';  // Spieler B
-
-	public static final char AIPlayer = APlayer;
 	
 	/*
 	 * Board als Feld. 
@@ -57,9 +56,9 @@ public class KalahBoard {
 	private static Scanner in = new Scanner(System.in);
 	private static final String ANSI_BLUE = "\u001B[34m";
 	
-	private static final int SearchDepth = 20;
-	private Map<Integer, Integer> aMove = new HashMap<Integer, Integer>();
-	private Map<Integer, Integer> bMove = new HashMap<Integer, Integer>();
+	private static int cost = 0;
+	private static final int SearchDepth = 100;
+	private Map<Integer, Integer> bestMove = new HashMap<Integer, Integer>();
 
 	/**
 	 *	Konstruktor.
@@ -177,10 +176,20 @@ public class KalahBoard {
 				            b[6], b[13],
 				            b[7], b[8], b[9], b[10], b[11], b[12]);
 		System.out.println(s3);
-		if (curPlayer == APlayer) {
-			System.out.println("Suggested move for player A: " + this.AlphaBetaSearch());
-		} else {
+		if (curPlayer == APlayer && !this.finished) {
+			System.out.println("Suggested move for player A (Alpha-Beta heuristic): " + this.AlphaBetaSearchRanked());
+			System.out.println("Alpha-Beta heuristic search cost: " + cost);
+			System.out.println("Suggested move for player A (Alpha-Beta): " + this.AlphaBetaSearch());
+			System.out.println("Alpha-Beta search cost: " + cost);
+			//System.out.println("Suggested move for player A (Minimax): " + this.MiniMax());
+			//System.out.println("Minimax search cost: " + cost);
+		} else if (!this.finished) {
+			System.out.println("Suggested move for player B (Alpha-Beta heuristic): " + this.AlphaBetaSearchRanked());
+			System.out.println("Alpha-Beta heuristic search cost: " + cost);
 			System.out.println("Suggested move for player B: " + this.AlphaBetaSearch());
+			System.out.println("Alpha-Beta search cost: " + cost);
+			System.out.println("Suggested move for player B (Minimax): " + this.MiniMax());
+			System.out.println("Minimax search cost: " + cost);
 		}
 	}
 
@@ -241,7 +250,7 @@ public class KalahBoard {
 				next.move(i);
 				actionList.add(next);	
 			}
-		}		
+		}
 		return actionList;
 	}
 	
@@ -408,7 +417,7 @@ public class KalahBoard {
 		}
 	}
 
-	private int heuristic() {
+	private int evaluate() {
 		int stonesInAPits = 0;
 		int stonesInBPits = 0;
 		for (int i = 0; i < NMulden; i++) {
@@ -416,55 +425,267 @@ public class KalahBoard {
 			stonesInBPits += board[BStart+i];
 		}
 		int h = board[AKalah] - board[BKalah] + stonesInAPits - stonesInBPits;
+		//int h = board[AKalah] - board[BKalah];
 		return h;
 	}
 
-	private int AlphaBetaSearch() {
-		aMove.clear();
-		if (curPlayer == APlayer) {
-			return MaxValue(this, Integer.MIN_VALUE, Integer.MAX_VALUE, SearchDepth);
+	private List<KalahBoard> possibleActionsRanked() {
+		//actionList.sort(Comparator.comparingInt(KalahBoard::rank));
+		List<KalahBoard> rankedActionList = new LinkedList<>();
+		for (int i = 72; i >= -72; --i) {
+			for (var a : possibleActions()) {
+				if (a.evaluate() == i) {
+					rankedActionList.add(a);
+				}
+			}
 		}
-		return MinValue(this, Integer.MIN_VALUE, Integer.MAX_VALUE, SearchDepth);
+		return rankedActionList;
 	}
 
-	private int MaxValue(KalahBoard b, int alpha, int beta, int dpth) {
-		if (b.finished || dpth == 0) {
-			return b.heuristic();
+	private int rank() {
+		int mulde = lastPlay;
+		if (curPlayer == APlayer) {
+			if (board[mulde] + mulde < NMulden) {
+				return 0;
+			} else if (board[mulde] + mulde == NMulden) {
+				return 1;
+			} else if (board[mulde] % 13 + mulde <= 5) {
+				return (board[mulde] + mulde) / 13;
+			} else {
+				return 3;
+			}
+		} else {
+			if (board[mulde] + mulde - 7 < NMulden) {
+				return 0;
+			} else if (board[mulde] + mulde - 7 == NMulden) {
+				return 1;
+			} else if (board[mulde] % 13 + mulde - 7 <= 5) {
+				return (board[mulde] + mulde -7) / 13;
+			} else {
+				return 3;
+			}
+		}
+	}
+
+	private int MiniMax() {
+		bestMove.clear();
+		cost = 0;
+		if (curPlayer == APlayer) {
+			return MaxValue(this, SearchDepth);
+		}
+		return MinValue(this, SearchDepth);
+	}
+
+	private int MaxValue(KalahBoard b, int depth) {
+		cost++;
+		if (b.finished || depth == 0) {
+			return b.evaluate();
 		}
 		int v = Integer.MIN_VALUE;
 		for (var a : this.possibleActions()) {
 			int saveValue = 0;
-			if (dpth == SearchDepth) {
-				saveValue = MinValue(a, alpha, beta, dpth-1);
+			if (depth == SearchDepth) {
+				if (a.isBonus()) {
+					saveValue = MaxValue(a, depth-1);
+				} else {
+					saveValue = MinValue(a, depth-1);
+				}
 				v = Integer.max(v, saveValue);
+			} else if (a.isBonus()) {
+				v = Integer.max(v, MaxValue(a, depth-1));
 			} else {
-				v = Integer.max(v, MinValue(a, alpha, beta, dpth-1));
+				v = Integer.max(v, MinValue(a, depth-1));
+			}
+			if (depth == SearchDepth) {
+				bestMove.put(saveValue, a.lastPlay);
+			}
+		}
+		if (depth == SearchDepth) {
+			return bestMove.get(v);
+		}
+		return v;
+	}
+
+	private int MinValue(KalahBoard b, int depth) {
+		cost++;
+		if (b.finished || depth == 0) {
+			return b.evaluate();
+		}
+		int v = Integer.MAX_VALUE;
+		for (var a : this.possibleActions()) {
+			int saveValue = 0;
+			if (depth == SearchDepth) {
+				if (a.isBonus()) {
+					saveValue = MinValue(a, depth-1);
+				} else {
+					saveValue = MaxValue(a, depth-1);
+				}
+				v = Integer.min(v, saveValue);
+			} else if (a.isBonus()) {
+				v = Integer.min(v, MinValue(a, depth-1));
+			} else {
+				v = Integer.min(v, MaxValue(a, depth-1));
+			}
+			if (depth == SearchDepth) {
+				bestMove.put(saveValue, a.lastPlay);
+			}
+		}
+		if (depth == SearchDepth) {
+			return bestMove.get(v);
+		}
+		return v;
+	}
+
+	private int AlphaBetaSearch() {
+		bestMove.clear();
+		cost = 0;
+		if (curPlayer == APlayer) {
+			return MaxValueAB(this, Integer.MIN_VALUE, Integer.MAX_VALUE, SearchDepth);
+		}
+		return MinValueAB(this, Integer.MIN_VALUE, Integer.MAX_VALUE, SearchDepth);
+	}
+
+	private int MaxValueAB(KalahBoard b, int alpha, int beta, int depth) {
+		cost++;
+		if (b.finished || depth == 0) {
+			return b.evaluate();
+		}
+		int v = Integer.MIN_VALUE;
+		for (var a : this.possibleActions()) {
+			int saveValue = 0;
+			if (depth == SearchDepth) {
+				if (a.isBonus()) {
+					saveValue = MaxValueAB(a, alpha, beta, depth-1);
+				} else {
+					saveValue = MinValueAB(a, alpha, beta, depth-1);
+				}
+				v = Integer.max(v, saveValue);
+			} else if (a.isBonus()) {
+				v = Integer.max(v, MaxValueAB(a, alpha, beta, depth-1));
+			} else {
+				v = Integer.max(v, MinValueAB(a, alpha, beta, depth-1));
 			}
 			if (v >= beta) {
 				return v;
 			}
 			alpha = Integer.max(alpha, v);
-			if (dpth == SearchDepth) {
-				aMove.put(saveValue, a.lastPlay);
+			if (depth == SearchDepth) {
+				bestMove.put(saveValue, a.lastPlay);
 			}
 		}
-		if (dpth == SearchDepth) {
-			return aMove.get(v);
+		if (depth == SearchDepth) {
+			return bestMove.get(v);
 		}
 		return v;
 	}
 
-	private int MinValue(KalahBoard b, int alpha, int beta, int dpth) {
-		if (b.finished || dpth == 0) {
-			return b.heuristic();
+	private int MinValueAB(KalahBoard b, int alpha, int beta, int depth) {
+		cost++;
+		if (b.finished || depth == 0) {
+			return b.evaluate();
 		}
 		int v = Integer.MAX_VALUE;
 		for (var a : this.possibleActions()) {
-			v = Integer.min(v, MaxValue(a, alpha, beta, dpth-1));
-			if (v >= beta) {
+			int saveValue = 0;
+			if (depth == SearchDepth) {
+				if (a.isBonus()) {
+					saveValue = MinValueAB(a, alpha, beta, depth-1);
+				} else {
+					saveValue = MaxValueAB(a, alpha, beta, depth-1);
+				}
+				v = Integer.min(v, saveValue);
+			} else if (a.isBonus()) {
+				v = Integer.min(v, MinValueAB(a, alpha, beta, depth-1));
+			} else {
+				v = Integer.min(v, MaxValueAB(a, alpha, beta, depth-1));
+			}
+			if (v <= alpha) {
 				return v;
 			}
 			beta = Integer.min(beta, v);
+			if (depth == SearchDepth) {
+				bestMove.put(saveValue, a.lastPlay);
+			}
+		}
+		if (depth == SearchDepth) {
+			return bestMove.get(v);
+		}
+		return v;
+	}
+
+	private int AlphaBetaSearchRanked() {
+		bestMove.clear();
+		cost = 0;
+		if (curPlayer == APlayer) {
+			return MaxValueABRanked(this, Integer.MIN_VALUE, Integer.MAX_VALUE, SearchDepth);
+		}
+		return MinValueABRanked(this, Integer.MIN_VALUE, Integer.MAX_VALUE, SearchDepth);
+	}
+
+	private int MaxValueABRanked(KalahBoard b, int alpha, int beta, int depth) {
+		cost++;
+		if (b.finished || depth == 0) {
+			return b.evaluate();
+		}
+		int v = Integer.MIN_VALUE;
+		for (var a : this.possibleActionsRanked()) {
+			int saveValue = 0;
+			if (depth == SearchDepth) {
+				if (a.isBonus()) {
+					saveValue = MaxValueABRanked(a, alpha, beta, depth-1);
+				} else {
+					saveValue = MinValueABRanked(a, alpha, beta, depth-1);
+				}
+				v = Integer.max(v, saveValue);
+			} else if (a.isBonus()) {
+				v = Integer.max(v, MaxValueABRanked(a, alpha, beta, depth-1));
+			} else {
+				v = Integer.max(v, MinValueABRanked(a, alpha, beta, depth-1));
+			}
+			if (v >= beta) {
+				return v;
+			}
+			alpha = Integer.max(alpha, v);
+			if (depth == SearchDepth) {
+				bestMove.put(saveValue, a.lastPlay);
+			}
+		}
+		if (depth == SearchDepth) {
+			return bestMove.get(v);
+		}
+		return v;
+	}
+
+	private int MinValueABRanked(KalahBoard b, int alpha, int beta, int depth) {
+		cost++;
+		if (b.finished || depth == 0) {
+			return b.evaluate();
+		}
+		int v = Integer.MAX_VALUE;
+		for (var a : this.possibleActionsRanked()) {
+			int saveValue = 0;
+			if (depth == SearchDepth) {
+				if (a.isBonus()) {
+					saveValue = MinValueABRanked(a, alpha, beta, depth-1);
+				} else {
+					saveValue = MaxValueABRanked(a, alpha, beta, depth-1);
+				}
+				v = Integer.min(v, saveValue);
+			} else if (a.isBonus()) {
+				v = Integer.min(v, MinValueABRanked(a, alpha, beta, depth-1));
+			} else {
+				v = Integer.min(v, MaxValueABRanked(a, alpha, beta, depth-1));
+			}
+			if (v <= alpha) {
+				return v;
+			}
+			beta = Integer.min(beta, v);
+			if (depth == SearchDepth) {
+				bestMove.put(saveValue, a.lastPlay);
+			}
+		}
+		if (depth == SearchDepth) {
+			return bestMove.get(v);
 		}
 		return v;
 	}
